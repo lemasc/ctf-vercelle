@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html>
+  <script>
+    (() => {
+      // Redirect to the correct URL. First time only.
+      const url = new URL(window.location.href);
+      window.location.href = `http://${
+        url.hostname === "localhost"
+          ? "vercelle-7f000001.nip.io"
+          : "vercelle-a1f6311c.nip.io"
+      }:${url.port}`;
+    })();
+  </script>
+  <noscript>Enable JavaScript to correctly do this challenge.</noscript>
+</html>
