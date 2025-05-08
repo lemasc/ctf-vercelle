@@ -34,7 +34,7 @@ RUN ln -s /usr/bin/php84 /usr/bin/php
 RUN set -eux; \
     adduser -u 82 -D -S -G www-data www-data; \
     chown -R www-data:www-data /var/lib/nginx; \
-    chown -R www-data:www-data /var/www;
+    rm -rf /var/www;
 
 # Setup config files
 COPY config/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
@@ -44,7 +44,20 @@ ENV PHP_INI_DIR /etc/php84
 COPY config/php/www.conf ${PHP_INI_DIR}/php-fpm.d/www.conf
 COPY config/php/php.ini ${PHP_INI_DIR}/conf.d/custom.ini
 
+COPY scripts /usr/local/bin
+RUN chmod +x /usr/local/bin/*.sh
+
 COPY www /var/www
+
+RUN set -eux; \
+    # By default www-data user owns the /var/www directory
+    # nginx and php-fpm run as www-data user so it can access
+    chown -R www-data:www-data /var/www; \
+    chmod 755 /var/www; \
+    # Set permissions for all subfolders and files to 750
+    find /var/www -mindepth 1 -exec chmod 750 {} \;
+
+RUN /usr/local/bin/create-site.sh -u admin -s internal;
 
 EXPOSE 8080
 
