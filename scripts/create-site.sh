@@ -27,33 +27,28 @@ if [ -z "${SITE}" ]; then
     SITE="${USER}"
 fi
 
+# Check site name for global uniqueness
+if [ -f "/etc/nginx/http.d/${SITE}.conf" ]; then
+    echo "Site ${SITE} already exists."
+    exit 1
+fi
+
 # Create the user with the prefix web-
 # This is to avoid conflicts with system users
 USER_PF="web-${USER}"
 
 # Create user and group
-if id "${USER_PF}" &>/dev/null; then
-    echo "User ${USER_} already exists"
-    exit 1
+if ! id "$USER_PF" >/dev/null 2>&1; then
+    addgroup "${USER_PF}"
+    adduser -s /bin/false -D -G "${USER_PF}" "${USER_PF}"
+    addgroup www-data "${USER_PF}"
 fi
 
-if getent group "${USER_PF}" > /dev/null; then
-    echo "User ${USER} already exists"
-    exit 1
-fi
-
-# The group name is the same as the user name
-addgroup "${USER_PF}"
-adduser -s /bin/false -D -G "${USER_PF}" "${USER_PF}"
-
-# Add www-data user to the user group
-addgroup www-data "${USER_PF}"
-
-WWW_ROOT="/var/www/${USER_PF}"
+WWW_ROOT="/var/www/${SITE}"
 
 mkdir -p "${WWW_ROOT}/public_html"
 
-# Create a simple index.html file if the index.html or index.php file does not exist
+# Create a simple index.html file if not exists
 if [ ! -f "${WWW_ROOT}/public_html/index.html" ] && [ ! -f "${WWW_ROOT}/public_html/index.php" ]; then
     cat <<EOL > "${WWW_ROOT}/public_html/index.html"
 <!DOCTYPE html>
@@ -61,7 +56,7 @@ if [ ! -f "${WWW_ROOT}/public_html/index.html" ] && [ ! -f "${WWW_ROOT}/public_h
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Welcome to ${USER}</title>
+    <title>Welcome to ${SITE}</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -77,8 +72,8 @@ if [ ! -f "${WWW_ROOT}/public_html/index.html" ] && [ ! -f "${WWW_ROOT}/public_h
     </style>
 </head>
 <body>
-    <h1>Welcome to ${USER}</h1>
-    <p>This is a simple web page for ${USER}.</p>
+    <h1>Welcome to ${SITE}</h1>
+    <p>This is a simple web page created by ${USER}.</p>
     <p>Feel free to customize it!</p>
     <hr>
     <p>Hosted on <strong>Vercelle</strong></p>
@@ -90,7 +85,7 @@ fi
 chown -R "${USER_PF}:${USER_PF}" "${WWW_ROOT}"
 chmod -R 750 "${WWW_ROOT}"
 
-# Create nginx config
+# Create nginx config for the site
 cat <<EOL > /etc/nginx/http.d/${SITE}.conf
 server {
     listen 8080;
@@ -103,7 +98,6 @@ server {
         try_files \$uri \$uri/ /index.php\$is_args\$args =404;
     }
 
-    # Redirect server error pages to the static page /50x.html
     error_page 500 502 503 504 /50x.html;
     location = /50x.html {
             root /var/lib/nginx/html;
@@ -120,7 +114,10 @@ server {
 }
 EOL
 
-cat <<EOL > $PHP_INI_DIR/php-fpm.d/${USER_PF}.conf
+# Create PHP-FPM pool only if not exist
+PHP_POOL_CONF="$PHP_INI_DIR/php-fpm.d/${USER_PF}.conf"
+if [ ! -f "$PHP_POOL_CONF" ]; then
+cat <<EOL > "$PHP_POOL_CONF"
 [${USER_PF}]
 user = ${USER_PF}
 group = ${USER_PF}
@@ -135,3 +132,4 @@ clear_env = no
 catch_workers_output = yes
 decorate_workers_output = no
 EOL
+fi
