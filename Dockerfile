@@ -46,6 +46,17 @@ ENV PHP_INI_DIR=/etc/php84
 COPY config/php/www.conf ${PHP_INI_DIR}/php-fpm.d/www.conf
 COPY config/php/php.ini ${PHP_INI_DIR}/conf.d/custom.ini
 
+# Install mariadb
+RUN set -eux; \
+    apk add --no-cache mariadb mariadb-client phpmyadmin && \
+    mkdir -p /run/mysqld && \
+    chown -R mysql:mysql /run/mysqld && \
+    chown -R mysql:mysql /var/lib/mysql
+
+# Set environment variables for MariaDB
+ENV MYSQL_ROOT_PASSWORD=h!wC@nU4me?? \
+    MYSQL_DATABASE=vercelle
+
 COPY scripts /usr/local/bin
 RUN chmod +x /usr/local/bin/*.sh
 
