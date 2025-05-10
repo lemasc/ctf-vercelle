@@ -18,3 +18,9 @@ Install from package-lock.json only. To verify deps, use the development build.
 docker build --target prod -t ctf-vercelle:prod .
 docker run -d -p 8080:8080 ctf-vercelle:prod
 ```
+
+## Debug Docker Container
+
+```sg
+docker run -it --entrypoint=/bin/bash ctf-vercelle:prod -i
+```
