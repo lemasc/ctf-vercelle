@@ -83,7 +83,7 @@ EOL
 fi
 
 chown -R "${USER_PF}:${USER_PF}" "${WWW_ROOT}"
-chmod -R 750 "${WWW_ROOT}"
+chmod -R 770 "${WWW_ROOT}"
 
 # Create nginx config for the site
 cat <<EOL > /etc/nginx/http.d/${SITE}.conf
