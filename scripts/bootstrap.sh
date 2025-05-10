@@ -32,6 +32,7 @@ sed -i "/^}/i\\
         index index.php index.html;\\
 \\
         location ~ \\\.php\$ {\\
+            access_log off;\\
             try_files \\\$uri =404;\\
             include fastcgi_params;\\
             fastcgi_split_path_info ^(.+\\\\.php)(/.+)\$;\\
