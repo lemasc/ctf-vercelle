@@ -8,17 +8,6 @@ chmod 755 /var/www
 # Set permissions for all subfolders and files to 770
 find /var/www -mindepth 1 -exec chmod 770 {}
 
-# Setup MySQL
-mariadb-install-db --user=mysql --basedir=/usr --datadir=/var/lib/mysql
-
-# Start temporary server to run initial SQL
-mariadbd --user=mysql --bootstrap <<EOF
-FLUSH PRIVILEGES;
-ALTER USER 'root'@'localhost' IDENTIFIED BY '${MYSQL_ROOT_PASSWORD}';
-CREATE DATABASE IF NOT EXISTS \`${MYSQL_DATABASE}\`;
-FLUSH PRIVILEGES;
-EOF
-
 # Create site will setup any necessary users and permissions
 USER="admin"
 SITE="internalsecret"

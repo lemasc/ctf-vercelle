@@ -60,13 +60,6 @@ ENV MYSQL_ROOT_PASSWORD=h0w!C4nUZme \
 COPY scripts /usr/local/bin
 RUN chmod +x /usr/local/bin/*.sh
 
-# Other sites are static files, can be copy as usual
-
-COPY www/.force-redirect /var/www/.force-redirect
-COPY www/internalsecret /var/www/internalsecret
-
-# The default site is using npm, so additional build steps are required
-
 # ============================================================================
 # Default Site: Development stage
 # ----------------------------------------------------------------------------
@@ -75,25 +68,31 @@ FROM base AS dev
 # the whole /var/www should be bind-mounted
 # so no need to copy anything here, just create a folder to apply permissions
 
-RUN apk add --no-cache npm libc6-compat
+# Other sites are static files, can be copy as usual
+
+RUN mkdir -p /var/www/.force-redirect
+RUN mkdir -p /var/www/internalsecret
+
+RUN apk add --no-cache npm
 RUN mkdir /var/www/default
 
-RUN /usr/local/bin/bootstrap.sh;
 ENV NODE_ENV=development
+RUN /usr/local/bin/init-db.sh
+RUN /usr/local/bin/bootstrap.sh;
+
 EXPOSE 8080
 CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
 
 # ============================================================================
 # Default Site: Production stage
 # ----------------------------------------------------------------------------
-FROM alpine:3.21 AS nodebuild-base
+FROM base AS nodebuild-base
 
-RUN apk add --no-cache nodejs npm
+RUN apk add --no-cache npm
 
 # ---------------------------------------
 FROM nodebuild-base AS nodebuild-deps
 
-RUN apk add --no-cache libc6-compat
 WORKDIR /app
 COPY www/default/package.json www/default/package-lock.json ./
 RUN npm ci
@@ -103,7 +102,11 @@ FROM nodebuild-base AS nodebuild
 WORKDIR /app
 COPY --from=nodebuild-deps /app/node_modules ./node_modules
 COPY www/default .
+
+ENV NODE_ENV=production
+RUN npx prisma generate
 RUN npm run build
+RUN /usr/local/bin/init-db.sh
 
 # ---------------------------------------
 FROM base AS prod
@@ -113,7 +116,9 @@ COPY --from=nodebuild /app/public /var/www/default/public
 COPY --from=nodebuild /app/.next/standalone /var/www/default
 COPY --from=nodebuild /app/.next/static /var/www/default/.next/static
 
+COPY www/.force-redirect /var/www/.force-redirect
+COPY www/internalsecret /var/www/internalsecret
+
 RUN /usr/local/bin/bootstrap.sh;
-ENV NODE_ENV=production
 EXPOSE 8080
 CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
