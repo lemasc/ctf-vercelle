@@ -9,5 +9,6 @@ else
     # make sure we have the latest and updated dependencies
     echo "Next.js is starting. Ensuring installed dependencies..."
     npm install
+    npx prisma migrate dev
     PORT=9000 npm run dev
 fi

@@ -11,7 +11,7 @@ generator client {
 
 datasource db {
   provider = "mysql"
-  url      = "mysql://root:h0w!C4nUZme@localhost/vercelle?socket=/run/mysqld/mysqld.sock"
+  url      = env("DATABASE_URL")
 }
 
 model User {

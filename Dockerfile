@@ -54,7 +54,7 @@ RUN set -eux; \
     chown -R mysql:mysql /var/lib/mysql
 
 # Set environment variables for MariaDB
-ENV MYSQL_ROOT_PASSWORD=h!wC@nU4me?? \
+ENV MYSQL_ROOT_PASSWORD=h0w!C4nUZme \
     MYSQL_DATABASE=vercelle
 
 COPY scripts /usr/local/bin
