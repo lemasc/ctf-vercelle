@@ -5,7 +5,7 @@
 while getopts ":u:s:" o; do
     case "${o}" in
         u)
-            USER=${OPTARG}
+            USER_IN=${OPTARG}
             ;;
         s)
             SITE=${OPTARG}
@@ -18,13 +18,13 @@ done
 
 shift $((OPTIND-1))
 
-if [ -z "$USER" ] || echo "$USER" | grep -q '[^a-z0-9]'; then
+if [ -z "$USER_IN" ] || echo "$USER_IN" | grep -q '[^a-z0-9]'; then
     echo "User not specified or invalid."
     exit 1
 fi
 
 if [ -z "${SITE}" ]; then
-    SITE="${USER}"
+    SITE="${USER_IN}"
 fi
 
 # Check site name for global uniqueness
@@ -35,7 +35,7 @@ fi
 
 # Create the user with the prefix web-
 # This is to avoid conflicts with system users
-USER_PF="web-${USER}"
+USER_PF="web-${USER_IN}"
 
 # Create user and group
 if ! id "$USER_PF" >/dev/null 2>&1; then
@@ -73,7 +73,7 @@ if [ ! -f "${WWW_ROOT}/public_html/index.html" ] && [ ! -f "${WWW_ROOT}/public_h
 </head>
 <body>
     <h1>Welcome to ${SITE}</h1>
-    <p>This is a simple web page created by ${USER}.</p>
+    <p>This is a simple web page created by ${USER_IN}.</p>
     <p>Feel free to customize it!</p>
     <hr>
     <p>Hosted on <strong>Vercelle</strong></p>
@@ -115,7 +115,7 @@ server {
 EOL
 
 # Create PHP-FPM pool only if not exist
-PHP_POOL_CONF="$PHP_INI_DIR/php-fpm.d/${USER_PF}.conf"
+PHP_POOL_CONF="/etc/php83/php-fpm.d/${USER_PF}.conf"
 if [ ! -f "$PHP_POOL_CONF" ]; then
 cat <<EOL > "$PHP_POOL_CONF"
 [${USER_PF}]

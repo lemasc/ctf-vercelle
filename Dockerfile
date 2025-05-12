@@ -15,6 +15,7 @@ ENV MYSQL_ROOT_PASSWORD=h0w!C4nUZme \
     MYSQL_DATABASE=vercelle
 
 COPY --chmod=770 scripts /usr/local/bin
+RUN chmod 755 /usr/local/bin/start-next.sh
 
 # --------------------------------------
 FROM base AS server
@@ -61,6 +62,8 @@ ENV PHP_INI_DIR=/etc/php83
 COPY config/php/www.conf ${PHP_INI_DIR}/php-fpm.d/www.conf
 COPY config/php/php.ini ${PHP_INI_DIR}/conf.d/custom.ini
 
+COPY config/sudoers /etc/sudoers.d
+
 # ============================================================================
 # Default Site: Development stage
 # ----------------------------------------------------------------------------
@@ -71,7 +74,10 @@ FROM server AS dev
 WORKDIR /var/www
 RUN apk add --no-cache npm
 
-RUN mkdir default .force-redirect internalsecret
+RUN mkdir default
+
+COPY www/.force-redirect /var/www/.force-redirect
+COPY www/internalsecret /var/www/internalsecret
 
 ENV NODE_ENV=development
 RUN /usr/local/bin/init-db.sh
