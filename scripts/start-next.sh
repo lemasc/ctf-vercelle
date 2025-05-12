@@ -10,5 +10,6 @@ else
     echo "Next.js is starting. Ensuring installed dependencies..."
     npm install
     npx prisma migrate dev
+    npx prisma db seed
     PORT=9000 npm run dev
 fi

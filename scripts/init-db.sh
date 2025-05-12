@@ -25,5 +25,6 @@ if [ $NODE_ENV == "production" ]; then
         sleep 1
     done
     npx prisma migrate deploy
+    npx prisma db seed
     kill -s SIGTERM $(pgrep -f mariadbd)
 fi
