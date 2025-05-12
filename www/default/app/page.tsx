@@ -6,5 +6,5 @@ export default async function GET() {
   if (!session) {
     return redirect("/login");
   }
-  return redirect(`/sites/${session.username}`); // Redirect to the user's site
+  return redirect(`/sites`);
 }

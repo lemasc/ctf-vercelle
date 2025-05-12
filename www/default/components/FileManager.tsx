@@ -1,31 +1,36 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Checkbox } from "@/components/ui/checkbox";
-import { format } from "date-fns";
 import {
   FolderIcon,
   FileIcon,
   Download,
   Upload,
-  Edit,
-  MoreHorizontal,
+  Trash,
+  Loader2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useRouter } from "next/navigation";
 
 export type FileItem = {
-  id: string;
   name: string;
   type: "file" | "folder";
-  lastModified: Date;
+  lastModified: string;
   size?: number; // Size in bytes
 };
 
 interface FileManagerProps {
+  site: string;
   items: FileItem[];
   onSelectionChange?: (selectedIds: string[]) => void;
 }
 
-export function FileManager({ items, onSelectionChange }: FileManagerProps) {
+export function FileManager({
+  items,
+  onSelectionChange,
+  site,
+}: FileManagerProps) {
+  const router = useRouter();
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
 
   const handleSelectionChange = (id: string, checked: boolean) => {
@@ -42,7 +47,7 @@ export function FileManager({ items, onSelectionChange }: FileManagerProps) {
       setSelectedItems([]);
       onSelectionChange?.([]);
     } else {
-      const allIds = items.map((item) => item.id);
+      const allIds = items.map((item) => item.name);
       setSelectedItems(allIds);
       onSelectionChange?.(allIds);
     }
@@ -57,8 +62,85 @@ export function FileManager({ items, onSelectionChange }: FileManagerProps) {
     return `${parseFloat((bytes / Math.pow(k, i)).toFixed(1))} ${sizes[i]}`;
   };
 
+  const [uploading, setUploading] = useState(false);
+
+  const handleUpload = () => {
+    if (uploading) return;
+    const input = document.createElement("input");
+    input.type = "file";
+    input.onchange = async (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0];
+      if (!file) return;
+      setUploading(true);
+      const formData = new FormData();
+      formData.append("file", file);
+
+      try {
+        const response = await fetch(`/api/sites/${site}/file/upload`, {
+          method: "POST",
+          body: formData,
+        });
+        if (!response.ok) {
+          throw new Error("Upload failed");
+        }
+        // Handle successful upload
+        router.refresh();
+        alert(`File ${file.name} uploaded successfully.`);
+      } catch (error) {
+        console.error("Upload error:", error);
+        alert(`Upload ${file.name} failed. Please try again.`);
+      } finally {
+        setUploading(false);
+      }
+    };
+    input.click();
+  };
+
+  const handleDownload = async () => {
+    if (selectedItems.length === 0) return;
+    const params = new URLSearchParams();
+    for (const item of selectedItems) {
+      params.append("fileName", item);
+    }
+    window.location.href = `/api/sites/${site}/file/download?${params.toString()}`;
+  };
+
+  const handleDelete = async () => {
+    if (selectedItems.length === 0) return;
+    const confirmed = confirm(
+      `Are you sure you want to delete file "${selectedItems.join(
+        ", "
+      )}"? This action cannot be undone.`
+    );
+    if (!confirmed) return;
+    try {
+      const response = await fetch(`/api/sites/${site}/file/delete`, {
+        method: "POST",
+        body: JSON.stringify({ fileNames: selectedItems }),
+      });
+
+      const result = await response.json();
+      if (!result.success) {
+        console.error("Delete error:", result.failures);
+        alert("Delete failed. Please try again.");
+      } else {
+        router.refresh();
+        alert("Files deleted successfully.");
+      }
+    } catch (error) {
+      alert("Delete failed. Please try again.");
+      router.refresh();
+      console.error("Delete error:", error);
+    }
+  };
+
+  useEffect(() => {
+    // reset selected items when items change (from remote)
+    setSelectedItems([]);
+  }, [items]);
+
   return (
-    <div className="w-full max-w-4xl mx-auto bg-background rounded-lg border">
+    <div className="bg-background rounded-lg border">
       {/* Toolbar */}
       <div className="flex items-center justify-between p-4 border-b">
         <div className="flex items-center gap-4">
@@ -75,14 +157,24 @@ export function FileManager({ items, onSelectionChange }: FileManagerProps) {
           </span>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="ghost" size="sm">
-            <Upload className="h-4 w-4 mr-2" />
-            Upload
+          <Button
+            onClick={handleUpload}
+            disabled={uploading}
+            variant="ghost"
+            size="sm"
+          >
+            {uploading ? (
+              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+            ) : (
+              <Upload className="h-4 w-4 mr-2" />
+            )}
+            Upload{uploading && "ing..."}
           </Button>
           <Button
             variant="ghost"
             size="sm"
             disabled={selectedItems.length === 0}
+            onClick={handleDownload}
           >
             <Download className="h-4 w-4 mr-2" />
             Download
@@ -90,13 +182,12 @@ export function FileManager({ items, onSelectionChange }: FileManagerProps) {
           <Button
             variant="ghost"
             size="sm"
+            onClick={handleDelete}
+            className="text-red-500 hover:text-red-500"
             disabled={selectedItems.length === 0}
           >
-            <Edit className="h-4 w-4 mr-2" />
-            Edit
-          </Button>
-          <Button variant="ghost" size="sm">
-            <MoreHorizontal className="h-4 w-4" />
+            <Trash className="h-4 w-4 mr-2" />
+            Delete
           </Button>
         </div>
       </div>
@@ -105,13 +196,14 @@ export function FileManager({ items, onSelectionChange }: FileManagerProps) {
       <div className="divide-y divide-border">
         {items.map((item) => (
           <div
-            key={item.id}
-            className="flex items-center gap-4 p-4 hover:bg-muted/50 transition-colors"
+            key={item.name}
+            data-selected={selectedItems.includes(item.name)}
+            className="flex items-center gap-4 p-4 hover:bg-muted/50 transition-colors data-[selected=true]:bg-muted"
           >
             <Checkbox
-              checked={selectedItems.includes(item.id)}
+              checked={selectedItems.includes(item.name)}
               onCheckedChange={(checked) =>
-                handleSelectionChange(item.id, checked as boolean)
+                handleSelectionChange(item.name, checked as boolean)
               }
             />
             <div className="flex items-center gap-2 flex-1">
@@ -126,7 +218,7 @@ export function FileManager({ items, onSelectionChange }: FileManagerProps) {
               {formatFileSize(item.size)}
             </span>
             <span className="text-sm text-muted-foreground w-32 text-right">
-              {format(item.lastModified, "MMM d, yyyy")}
+              {item.lastModified}
             </span>
           </div>
         ))}

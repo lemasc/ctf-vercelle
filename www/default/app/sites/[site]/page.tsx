@@ -1,69 +1,38 @@
-import { FileManager, FileItem } from "@/components/FileManager";
+import { FileManager } from "@/components/FileManager";
 import { getSession } from "@/lib/jwt";
 import { redirect } from "next/navigation";
-import LogoutButton from "./logout-button";
+import { getSiteFiles, isSiteAuthorized } from "@/lib/sites";
+import { OpenSiteButton } from "../open-site-button";
 
-const mockFiles: FileItem[] = [
-  {
-    id: "1",
-    name: "Documents",
-    type: "folder",
-    lastModified: new Date("2024-03-15"),
-  },
-  {
-    id: "2",
-    name: "Project Proposal.docx",
-    type: "file",
-    lastModified: new Date("2024-03-14"),
-    size: 2.5 * 1024 * 1024, // 2.5 MB
-  },
-  {
-    id: "3",
-    name: "Images",
-    type: "folder",
-    lastModified: new Date("2024-03-13"),
-  },
-  {
-    id: "4",
-    name: "Presentation.pptx",
-    type: "file",
-    lastModified: new Date("2024-03-12"),
-    size: 15.8 * 1024 * 1024, // 15.8 MB
-  },
-  {
-    id: "5",
-    name: "Budget.xlsx",
-    type: "file",
-    lastModified: new Date("2024-03-11"),
-    size: 1.2 * 1024 * 1024, // 1.2 MB
-  },
-];
-
-export default async function Page({ params: _params }: { params: Promise<{ site: string }> }) {
-  const params = await _params;
+export default async function Page({
+  params: _params,
+}: {
+  params: Promise<{ site: string }>;
+}) {
+  const { site } = await _params;
   const session = await getSession();
 
-  if (!session) {
+  if (!session || !isSiteAuthorized(site, session.username)) {
     redirect("/login");
-  } else if (session.username !== params.site) {
-    redirect(`/sites/${session.username}`);
   }
+
+  const files = await getSiteFiles(site);
+
   return (
-    <div className="min-h-screen bg-white p-8">
-      <div className="mx-auto max-w-7xl">
-        <div className="flex justify-between items-center mb-8">
+    <div className="px-6 py-8 flex flex-col gap-8 flex-1">
+      <div className="flex justify-between items-start">
+        <div className="flex flex-col gap-2">
           <h1 className="text-3xl font-bold text-gray-900">
-            Welcome, {session.username}!
+            {site}.vercelle.com
           </h1>
-          <LogoutButton />
+          <p className="text-neutral-500">Manage your website files here.</p>
         </div>
-        <p className="text-gray-600">
-          This is your personal dashboard. You{"'"}ve successfully logged in.
-        </p>
-        <main>
-          <h1 className="text-2xl font-bold mb-6">File Manager</h1>
-          <FileManager items={mockFiles} />
-        </main>
+        <OpenSiteButton size="lg" siteName={site} />
+      </div>
+      <hr className="border-neutral-200 border-b" />
+      <div className="flex flex-col gap-6">
+        <h2 className="text-2xl font-bold">File Manager</h2>
+        <FileManager items={files} site={site} />
       </div>
     </div>
   );

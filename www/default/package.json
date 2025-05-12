@@ -17,12 +17,14 @@
     "clsx": "^2.1.1",
     "date-fns": "^4.1.0",
     "jsonwebtoken": "^9.0.2",
+    "jszip": "^3.10.1",
     "lucide-react": "^0.509.0",
     "mysql2": "^3.14.1",
     "next": "15.3.2",
     "prisma": "^6.7.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
+    "sanitize-filename": "^1.6.3",
     "tailwind-merge": "^3.2.0"
   },
   "devDependencies": {
