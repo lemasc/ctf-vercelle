@@ -23,6 +23,7 @@ FROM base AS server
 RUN apk add --no-cache \
     sudo \
     curl \
+    tar \
     nginx \
     php83 \
     php83-ctype \
@@ -74,10 +75,9 @@ FROM server AS dev
 WORKDIR /var/www
 RUN apk add --no-cache npm
 
-RUN mkdir default
+RUN mkdir default internalsecret
 
 COPY www/.force-redirect /var/www/.force-redirect
-COPY www/internalsecret /var/www/internalsecret
 
 ENV NODE_ENV=development
 RUN /usr/local/bin/init-db.sh

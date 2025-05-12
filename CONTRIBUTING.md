@@ -4,7 +4,7 @@
 
 ```sh
 docker build --target dev -t ctf-vercelle:dev .
-docker run -d -v "$PWD\www\default:/var/www/default" -v "vercelle-next:/var/www/default/.next" -v "vercelle-npm:/var/www/default/node_modules" -p 8080:8080 ctf-vercelle:dev
+docker run -d -v "$PWD\www\default:/var/www/default" -v "vercelle-next:/var/www/default/.next" -v "vercelle-npm:/var/www/default/node_modules" -v "$PWD\www\internalsecret:/var/www/internalsecret" -p 8080:8080 ctf-vercelle:dev
 ```
 
 - Use www binding on localhost, preserve node_modules and cache on Docker volumes for best performance.
