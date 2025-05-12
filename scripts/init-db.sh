@@ -17,7 +17,13 @@ if [ $NODE_ENV == "production" ]; then
     # Run prisma migrate deploy
     # Then kill the process
     mariadbd --user=mysql &
-    sleep 5
+    # Wait for MariaDB to be ready
+    for i in $(seq 1 30); do
+        if mariadb-admin ping -h localhost -u root -p"${MYSQL_ROOT_PASSWORD}" --silent; then
+            break
+        fi
+        sleep 1
+    done
     npx prisma migrate deploy
-    kill -9 $(pgrep -f mariadbd)
+    kill -s SIGTERM $(pgrep -f mariadbd)
 fi

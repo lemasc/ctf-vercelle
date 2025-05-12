@@ -1,7 +1,11 @@
 import jwt from "jsonwebtoken";
 import { cookies } from "next/headers";
 
-const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key"; // In production, use a strong secret
+if (typeof process.env.JWT_SECRET !== "string") {
+  throw new Error("JWT_SECRET envvar is not defined");
+}
+
+const JWT_SECRET = process.env.JWT_SECRET;
 
 export interface JWTPayload {
   userId: number;
@@ -32,7 +36,6 @@ export async function setSession(payload: JWTPayload) {
   const cookieStore = await cookies();
   cookieStore.set("session", token, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
     sameSite: "lax",
     maxAge: 60 * 60 * 24 * 7, // 7 days
   });
