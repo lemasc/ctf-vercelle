@@ -96,6 +96,7 @@ server {
     root ${WWW_ROOT}/public_html;
     index index.php index.html;
     add_header X-Powered-By "PHP/8.3.19" always;
+    absolute_redirect off;
 
     location / {
             try_files \$uri \$uri.html \$uri/ @extensionless-php;

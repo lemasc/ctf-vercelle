@@ -28,11 +28,18 @@ export async function POST(
     if (!file) {
       return NextResponse.json({ error: "No file uploaded" }, { status: 400 });
     }
+    const root = formData.get("root");
+
+    if (root && typeof root !== "string") {
+      return NextResponse.json({ error: "Invalid root" }, { status: 400 });
+    }
 
     const arrayBuffer = await file.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
 
-    const uploadPath = safePath`/var/www/${site}/public_html/${file.name}`;
+    const uploadPath = safePath`/var/www/${site}/public_html${(
+      root ?? "/"
+    ).split("/")}${file.name}`;
 
     try {
       await fs.writeFile(uploadPath.toString(), buffer);

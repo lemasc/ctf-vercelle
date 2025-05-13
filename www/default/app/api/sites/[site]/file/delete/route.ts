@@ -14,7 +14,7 @@ export const POST = async (
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
   try {
-    const { fileNames } = await request.json();
+    const { fileNames, root } = await request.json();
 
     if (
       !Array.isArray(fileNames) ||
@@ -24,14 +24,20 @@ export const POST = async (
       return NextResponse.json({ error: "Invalid request" }, { status: 400 });
     }
 
-    const baseDir = safePath`/var/www/${site}/public_html`;
+    if (root && typeof root !== "string") {
+      return NextResponse.json({ error: "Invalid root" }, { status: 400 });
+    }
+
+    const baseDir = safePath`/var/www/${site}/public_html${(root || "/").split(
+      "/"
+    )}`;
 
     const deletePromises = fileNames.map(async (name) => {
       const filePath = safePath`${baseDir}/${name}`;
       try {
         const stat = await fs.stat(filePath.toString());
-        if(stat.isDirectory()) {
-          throw new Error("Removing directory is not supported")
+        if (stat.isDirectory()) {
+          throw new Error("Removing directory is not supported");
         } else {
           await fs.unlink(filePath.toString());
         }
@@ -57,7 +63,8 @@ export const POST = async (
         : `Failed to delete ${failure.length} files.`,
       ...(success ? {} : { failures: failure }),
     });
-  } catch {
+  } catch (err) {
+    console.error("Error deleting files:", err);
     return NextResponse.json(
       { success: false, message: "Bad request", failures: [] },
       { status: 400 }

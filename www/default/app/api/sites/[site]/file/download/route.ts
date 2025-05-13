@@ -16,17 +16,22 @@ export const GET = async (
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const fileNames = request.nextUrl.searchParams.getAll("fileName");
+  const query = request.nextUrl.searchParams;
+
+  const fileNames = query.getAll("fileName");
 
   if (!Array.isArray(fileNames) || fileNames.length === 0) {
     return NextResponse.json({ error: "Invalid file names" }, { status: 400 });
   }
 
   try {
-    const requestedRoot = request.nextUrl.searchParams.get("root") || "/";
-    const root = safePath`/var/www/${site}/public_html${requestedRoot.split(
-      "/"
-    )}`;
+    const requestedRoot = query.get("root");
+    if (requestedRoot && typeof requestedRoot !== "string") {
+      return NextResponse.json({ error: "Invalid root" }, { status: 400 });
+    }
+    const root = safePath`/var/www/${site}/public_html${(
+      requestedRoot || "/"
+    ).split("/")}`;
 
     if (fileNames.length === 1) {
       const filePath = safePath`${root}/${fileNames[0]}`;

@@ -76,6 +76,7 @@ export function FileManager({
       if (!file) return;
       setUploading(true);
       const formData = new FormData();
+      formData.append("root", root);
       formData.append("file", file);
 
       try {
@@ -120,7 +121,7 @@ export function FileManager({
     try {
       const response = await fetch(`/api/sites/${site}/file/delete`, {
         method: "POST",
-        body: JSON.stringify({ fileNames: selectedItems }),
+        body: JSON.stringify({ fileNames: selectedItems, root }),
       });
 
       const result = await response.json();

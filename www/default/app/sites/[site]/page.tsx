@@ -35,7 +35,7 @@ export default async function Page({
       <div className="flex flex-col gap-6">
         <div className="flex flex-col gap-2">
           <h2 className="text-2xl font-bold">File Manager</h2>
-          <div className="text-sm text-neutral-800">Path: {path}</div>
+          <div className="text-neutral-800">Path: {path}</div>
         </div>
         <FileManager items={files} site={site} root={path} />
       </div>

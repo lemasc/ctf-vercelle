@@ -14,9 +14,6 @@ RUN mkdir -p /run/mysqld /var/lib/mysql; \
 ENV MYSQL_ROOT_PASSWORD=h0w!C4nUZme \
     MYSQL_DATABASE=vercelle
 
-COPY --chmod=770 scripts /usr/local/bin
-RUN chmod 755 /usr/local/bin/start-next.sh
-
 # --------------------------------------
 FROM base AS server
 
@@ -83,6 +80,9 @@ FROM server AS dev
 WORKDIR /var/www
 RUN apk add --no-cache npm
 
+COPY --chmod=770 scripts /usr/local/bin
+RUN chmod 755 /usr/local/bin/start-next.sh
+
 RUN mkdir default internalsecret
 
 COPY --chown=www-data:www-data --chmod=770 www/.force-redirect /var/www/.force-redirect
@@ -115,6 +115,8 @@ WORKDIR /app
 COPY --from=nodebuild-deps /app/node_modules ./node_modules
 COPY www/default .
 
+COPY --chmod=770 scripts/init-db.sh /usr/local/bin
+
 ENV NODE_ENV=production
 RUN npx prisma generate
 RUN npm run build
@@ -125,6 +127,9 @@ FROM server AS prod
 
 WORKDIR /var/www
 ENV NODE_ENV=production
+
+COPY --chmod=770 scripts /usr/local/bin
+RUN chmod 755 /usr/local/bin/start-next.sh
 
 COPY --from=nodebuild --chown=mysql:mysql /var/lib/mysql /var/lib/mysql
 
