@@ -23,7 +23,7 @@ $folders = glob("/var/www/*", GLOB_ONLYDIR);
         <h1>Backup Site</h1>
         <div>
             <h2>Welcome, <?php echo $_SESSION["username"]; ?></h2>
-            <form method="post" action="/logout" style="max-width: 100px;">
+            <form method="post" action="/logout.php" style="max-width: 100px;">
                 <button type="submit">Logout</button>
             </form>
             <p>If you can see this, then you deserve the second flag!</p>

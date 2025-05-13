@@ -11,10 +11,11 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 export type FileItem = {
   name: string;
-  type: "file" | "folder";
+  type: "file" | "dir";
   lastModified: string;
   size?: number; // Size in bytes
 };
@@ -22,6 +23,7 @@ export type FileItem = {
 interface FileManagerProps {
   site: string;
   items: FileItem[];
+  root: string;
   onSelectionChange?: (selectedIds: string[]) => void;
 }
 
@@ -29,6 +31,7 @@ export function FileManager({
   items,
   onSelectionChange,
   site,
+  root,
 }: FileManagerProps) {
   const router = useRouter();
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
@@ -99,6 +102,7 @@ export function FileManager({
   const handleDownload = async () => {
     if (selectedItems.length === 0) return;
     const params = new URLSearchParams();
+    params.append("root", root);
     for (const item of selectedItems) {
       params.append("fileName", item);
     }
@@ -108,7 +112,7 @@ export function FileManager({
   const handleDelete = async () => {
     if (selectedItems.length === 0) return;
     const confirmed = confirm(
-      `Are you sure you want to delete file "${selectedItems.join(
+      `Are you sure you want to delete "${selectedItems.join(
         ", "
       )}"? This action cannot be undone.`
     );
@@ -124,13 +128,13 @@ export function FileManager({
         console.error("Delete error:", result.failures);
         alert("Delete failed. Please try again.");
       } else {
-        router.refresh();
         alert("Files deleted successfully.");
       }
     } catch (error) {
       alert("Delete failed. Please try again.");
-      router.refresh();
       console.error("Delete error:", error);
+    } finally {
+      router.refresh();
     }
   };
 
@@ -207,16 +211,28 @@ export function FileManager({
               }
             />
             <div className="flex items-center gap-2 flex-1">
-              {item.type === "folder" ? (
-                <FolderIcon className="h-5 w-5 text-yellow-500" />
+              {item.type === "dir" ? (
+                <>
+                  <FolderIcon className="h-5 w-5 text-yellow-500" />
+                  <Link
+                    href={`/sites/${site}/browse${root}${item.name}`}
+                    className="hover:underline font-medium"
+                  >
+                    {item.name}
+                  </Link>
+                </>
               ) : (
-                <FileIcon className="h-5 w-5 text-blue-500" />
+                <>
+                  <FileIcon className="h-5 w-5 text-blue-500" />
+                  <span className="font-medium">{item.name}</span>
+                </>
               )}
-              <span className="font-medium">{item.name}</span>
             </div>
-            <span className="text-sm text-muted-foreground w-24 text-right">
-              {formatFileSize(item.size)}
-            </span>
+            {item.type === "file" && (
+              <span className="text-sm text-muted-foreground w-24 text-right">
+                {formatFileSize(item.size)}
+              </span>
+            )}
             <span className="text-sm text-muted-foreground w-32 text-right">
               {item.lastModified}
             </span>

@@ -98,7 +98,7 @@ server {
     add_header X-Powered-By "PHP/8.3.19" always;
 
     location / {
-            try_files \$uri \$uri/ \$uri.php\$is_args\$args =404;
+            try_files \$uri \$uri.html \$uri/ @extensionless-php;
     }
 
     error_page 500 502 503 504 /50x.html;
@@ -113,6 +113,10 @@ server {
         fastcgi_pass unix:/run/php-fpm-${USER_PF}.sock;
         fastcgi_param SCRIPT_FILENAME \$document_root\$fastcgi_script_name;
         fastcgi_index index.php;
+    }
+
+    location @extensionless-php {
+        rewrite ^(.*)$ $1.php last;
     }
 }
 EOL

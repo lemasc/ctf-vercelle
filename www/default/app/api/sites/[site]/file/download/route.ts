@@ -1,8 +1,9 @@
 import { getSession } from "@/lib/jwt";
 import { isSiteAuthorized } from "@/lib/sites";
 import { NextRequest, NextResponse } from "next/server";
-import { safePath } from "@/lib/safe-path";
+import { safePath, SanitizedPath } from "@/lib/safe-path";
 import { promises as fs } from "fs";
+import { basename } from "path";
 import JSZip from "jszip";
 
 export const GET = async (
@@ -22,28 +23,49 @@ export const GET = async (
   }
 
   try {
-    if (fileNames.length === 1) {
-      const filePath = safePath`/var/www/${site}/public_html/${fileNames[0]}`;
+    const requestedRoot = request.nextUrl.searchParams.get("root") || "/";
+    const root = safePath`/var/www/${site}/public_html${requestedRoot.split(
+      "/"
+    )}`;
 
+    if (fileNames.length === 1) {
+      const filePath = safePath`${root}/${fileNames[0]}`;
       try {
-        const file = await fs.readFile(filePath.toString());
-        return new Response(file, {
-          headers: {
-            "Content-Type": "application/octet-stream",
-            "Content-Disposition": `attachment; filename="${fileNames[0]}"`,
-          },
-        });
+        const stat = await fs.stat(filePath.toString());
+        if (stat.isFile()) {
+          // target is a single file
+          const file = await fs.readFile(filePath.toString());
+          return new Response(file, {
+            headers: {
+              "Content-Type": "application/octet-stream",
+              "Content-Disposition": `attachment; filename="${fileNames[0]}"`,
+            },
+          });
+        }
       } catch (error) {
         console.error("Error reading file:", error);
         return NextResponse.json({ error: "File not found" }, { status: 404 });
       }
-    } else {
-      const zip = new JSZip();
-      for (const fileName of fileNames) {
-        const filePath = safePath`/var/www/${site}/public_html/${fileName}`;
+    }
+
+    const zip = new JSZip();
+
+    const addToZip = async (files: string[], folder: SanitizedPath) => {
+      for (const fileName of files) {
+        const filePath = safePath`${root}/${folder}/${fileName}`;
         try {
-          const file = await fs.readFile(filePath.toString());
-          zip.file(fileName, file);
+          // check if the path given is a directory
+          const path = filePath.toString();
+          const stat = await fs.stat(path);
+          if (stat.isDirectory()) {
+            // add the directory to the zip
+            const filesInside = await fs.readdir(path);
+            await addToZip(filesInside, safePath`${folder}${basename(path)}`);
+          } else {
+            // add the file to the zip
+            const file = await fs.readFile(filePath.toString());
+            zip.file(folder + "/" + fileName, file);
+          }
         } catch (error) {
           console.error("Error reading file:", error);
           return NextResponse.json(
@@ -52,16 +74,17 @@ export const GET = async (
           );
         }
       }
-      const zipBlob = await zip.generateAsync({ type: "blob" });
-      return new Response(zipBlob, {
-        headers: {
-          "Content-Type": "application/zip",
-          "Content-Disposition": `attachment; filename="${site}-${
-            new Date().toISOString().split("T")[0]
-          }.zip"`,
-        },
-      });
-    }
+    };
+
+    await addToZip(fileNames, safePath`/`);
+
+    const zipBlob = await zip.generateAsync({ type: "blob" });
+    return new Response(zipBlob, {
+      headers: {
+        "Content-Type": "application/zip",
+        "Content-Disposition": `attachment; filename="${site}-${new Date().toISOString()}.zip"`,
+      },
+    });
   } catch (error) {
     console.error("Error downloading file", error);
     return NextResponse.json({ error: "Bad request" }, { status: 400 });

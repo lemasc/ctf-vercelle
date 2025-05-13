@@ -37,11 +37,11 @@ if (isset($_POST["username"]) && isset($_POST["password"])) {
         <h1>Login to Internal Site</h1>
         <form method="post">
             <div class="form-group">
-                <label for="username">Username</label><br/>
+                <label for="username">Username</label>
                 <input type="text" name="username" placeholder="Username" required>
             </div>
             <div class="form-group">
-                <label for="password">Password</label><br/>
+                <label for="password">Password</label>
                 <input type="password" name="password" placeholder="Password" required>
             </div>
             <button type="submit">Login</button>

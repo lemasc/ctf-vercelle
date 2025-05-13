@@ -21,6 +21,7 @@ export const ls = async (path: string) => {
       size: parseInt(size),
       dateModified,
       name,
+      type: perm.startsWith("d") ? "dir" as const : "file" as const,
     };
   });
 };

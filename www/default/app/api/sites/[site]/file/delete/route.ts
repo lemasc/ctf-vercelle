@@ -29,7 +29,12 @@ export const POST = async (
     const deletePromises = fileNames.map(async (name) => {
       const filePath = safePath`${baseDir}/${name}`;
       try {
-        await fs.unlink(filePath.toString());
+        const stat = await fs.stat(filePath.toString());
+        if(stat.isDirectory()) {
+          throw new Error("Removing directory is not supported")
+        } else {
+          await fs.unlink(filePath.toString());
+        }
         return { success: true, name };
       } catch (error) {
         return {

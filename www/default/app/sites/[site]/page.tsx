@@ -5,18 +5,20 @@ import { getSiteFiles, isSiteAuthorized } from "@/lib/sites";
 import { OpenSiteButton } from "../open-site-button";
 
 export default async function Page({
-  params: _params,
+  params,
 }: {
-  params: Promise<{ site: string }>;
+  params: Promise<{ site: string; path?: string[] }>;
 }) {
-  const { site } = await _params;
+  const { site, path: _path } = await params;
+  const path = "/" + (_path?.join("/") ?? "");
+
   const session = await getSession();
 
   if (!session || !isSiteAuthorized(site, session.username)) {
     redirect("/login");
   }
 
-  const files = await getSiteFiles(site);
+  const files = await getSiteFiles(site, path);
 
   return (
     <div className="px-6 py-8 flex flex-col gap-8 flex-1">
@@ -31,8 +33,11 @@ export default async function Page({
       </div>
       <hr className="border-neutral-200 border-b" />
       <div className="flex flex-col gap-6">
-        <h2 className="text-2xl font-bold">File Manager</h2>
-        <FileManager items={files} site={site} />
+        <div className="flex flex-col gap-2">
+          <h2 className="text-2xl font-bold">File Manager</h2>
+          <div className="text-sm text-neutral-800">Path: {path}</div>
+        </div>
+        <FileManager items={files} site={site} root={path} />
       </div>
     </div>
   );

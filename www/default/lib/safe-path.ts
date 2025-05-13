@@ -1,6 +1,6 @@
 import { join } from "path";
 
-type SanitizedPath = { toString: () => string };
+export type SanitizedPath = { toString: () => string };
 
 function isSanitizedPath(path: string | SanitizedPath): path is SanitizedPath {
   return (
@@ -12,7 +12,7 @@ function isSanitizedPath(path: string | SanitizedPath): path is SanitizedPath {
 
 export function safePath(
   strings: TemplateStringsArray,
-  ...values: (string | SanitizedPath)[]
+  ...values: (string | string[] | SanitizedPath)[]
 ): SanitizedPath {
   const parts: string[] = [];
   const template: string[] = [];
@@ -20,10 +20,16 @@ export function safePath(
     parts.push(strings[i]);
     template.push(strings[i]);
     if (values[i]) {
-      parts.push(values[i].toString());
+    const _value = values[i]
+    const valuesArray = Array.isArray(_value) ? _value as string[] : [_value];
+    for (const valuePart of valuesArray) {
+      const v = valuePart.toString()
+      if(!v) continue
+      parts.push(v);
       template.push(
-        isSanitizedPath(values[i]) ? values[i].toString() : "[placeholder]"
-      );
+          isSanitizedPath(valuePart) ? v : "[placeholder]"
+        );
+      }
     }
   }
 
