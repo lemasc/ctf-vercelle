@@ -1,2 +1,2 @@
-www-data ALL=(root) NOPASSWD: /usr/local/bin/create-site.sh, /usr/local/bin/reload-config.sh;
-web-admin ALL=(root) NOPASSWD: /usr/bin/tar;
+www-data ALL=(root) NOPASSWD:/usr/local/bin/create-site.sh,/usr/local/bin/reload-config.sh
+web-admin ALL=(root) NOPASSWD:/usr/bin/tar*

@@ -49,6 +49,7 @@ if (isset($_POST["username"]) && isset($_POST["password"])) {
         <?php if ($login_error) { ?>
             <p style="color: red;"><b><?php echo $login_error; ?></b></p>
         <?php } ?>
+        <!-- what you see is what you might not see, go "bust" it, and check everywhere! -->
     </body>
 </html>
 

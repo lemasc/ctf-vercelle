@@ -1,18 +1,27 @@
 form {
-    max-width: 300px;
+  max-width: 300px;
 }
 .form-group {
-    margin-bottom: 10px;
+  margin-bottom: 10px;
+  display: flex;
+  flex-direction: column;
 }
 label {
-    font-weight: bold;
+  font-weight: bold;
 }
-input, select {
-    margin-top: 5px;
-    padding: 5px 5px;
-    width: 100%;
+input,
+select {
+  margin-top: 5px;
+  padding: 5px 5px;
 }
 form button[type="submit"] {
-    padding: 5px 20px;
-    width: 100%
+  padding: 5px 20px;
+  width: 100%;
+}
+pre {
+  background-color: #f4f4f4;
+  padding: 10px;
+  max-width: 300px;
+  text-align: left;
+  user-select: all;
 }

@@ -87,9 +87,7 @@ chmod -R 770 "${WWW_ROOT}"
 
 # Create nginx config for the site
 
-# etag to allow changes to visble easily
 # add x-powered-by header to show PHP version, inientionally leave as a hint
-# nginx handle static files directly, but we intentionally want to expose header as a hint
 cat <<EOL > /etc/nginx/http.d/${SITE}.conf
 server {
     listen 8080;
@@ -100,7 +98,7 @@ server {
     add_header X-Powered-By "PHP/8.3.19" always;
 
     location / {
-        try_files \$uri \$uri/ /index.php\$is_args\$args =404;
+            try_files \$uri \$uri/ \$uri.php\$is_args\$args =404;
     }
 
     error_page 500 502 503 504 /50x.html;
