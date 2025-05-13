@@ -1,5 +1,6 @@
 import jwt from "jsonwebtoken";
 import { cookies } from "next/headers";
+import { prisma } from "./prisma";
 
 if (typeof process.env.JWT_SECRET !== "string") {
   throw new Error("JWT_SECRET envvar is not defined");
@@ -13,12 +14,20 @@ export interface JWTPayload {
 }
 
 export function generateToken(payload: JWTPayload): string {
-  return jwt.sign(payload, JWT_SECRET, { expiresIn: "7d" });
+  return jwt.sign(payload, JWT_SECRET, {
+    expiresIn: "7d",
+  });
 }
 
-export function verifyToken(token: string): JWTPayload | null {
+export async function verifyToken(token: string): Promise<JWTPayload | null> {
   try {
-    return jwt.verify(token, JWT_SECRET) as JWTPayload;
+    const payload = jwt.verify(token, JWT_SECRET) as JWTPayload;
+    // check if the userId and username does match in the db
+    // it may lose when restart the container
+    await prisma.user.findUniqueOrThrow({
+      where: { id: payload.userId, username: payload.username },
+    });
+    return payload;
   } catch {
     return null;
   }
